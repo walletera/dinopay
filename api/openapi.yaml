@@ -20,6 +20,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/payment"
+              example:
+                id: bb17667e-daac-41f6-ada3-2c22f24caf22
+                amount: 100
+                currency: USD
+                sourceAccount:
+                  accountHolder: john doe
+                  accountNumber: IE12BOFI90000112345678
+                destinationAccount:
+                  accountHolder: jane doe
+                  accountNumber: IE12BOFI90000112349876
+                status: pending
+                customerTransactionId: 9713ec22-cf8d-4a21-affb-719db00d7388
+                createdAt: '2023-07-07T19:31:11Z'
+                updatedAt: '2023-07-07T19:31:11Z'
         "400":
           description: "The provided parameters are incorrect"
           content:
