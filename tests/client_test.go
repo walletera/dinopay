@@ -8,30 +8,70 @@ import (
     "github.com/walletera/dinopay/api"
     "net/http/httptest"
     "testing"
+    "time"
 )
 
-func TestClient(t *testing.T) {
-    paymentID, err := uuid.NewUUID()
+func TestClient_CreatePayment_Succeed(t *testing.T) {
+    customerTransactionId, err := uuid.NewUUID()
     require.NoError(t, err)
 
     payment := &api.Payment{
-        ID: api.OptUUID{
-            Value: paymentID,
+        Amount:   100.5,
+        Currency: "USD",
+        SourceAccount: api.Account{
+            AccountHolder: "John Doe",
+            AccountNumber: "9A8SD7F98AS7D9F87",
+        },
+        DestinationAccount: api.Account{
+            AccountHolder: "Jane Doe",
+            AccountNumber: "A0S9D8F0A98SDF0A9",
+        },
+        Status: api.OptPaymentStatus{},
+        CustomerTransactionId: api.OptString{
+            Value: customerTransactionId.String(),
             Set:   true,
         },
-        Amount:                0,
-        Currency:              "",
-        SourceAccount:         api.Account{},
-        DestinationAccount:    api.Account{},
-        Status:                api.OptPaymentStatus{},
-        CustomerTransactionId: api.OptString{},
-        CreatedAt:             api.OptDate{},
-        UpdatedAt:             api.OptDate{},
+        CreatedAt: api.OptDate{},
+        UpdatedAt: api.OptDate{},
     }
+
+    responsePaymentID, err := uuid.NewUUID()
+    require.NoError(t, err)
 
     handlerMock := NewMockHandler(t)
     handlerMock.EXPECT().CreatePayment(mock.Anything, mock.Anything).Return(
-        payment, nil)
+        &api.Payment{
+            ID: api.OptUUID{
+                Value: responsePaymentID,
+                Set:   true,
+            },
+            Amount:   payment.Amount,
+            Currency: payment.Currency,
+            SourceAccount: api.Account{
+                AccountHolder: payment.SourceAccount.AccountHolder,
+                AccountNumber: payment.SourceAccount.AccountNumber,
+            },
+            DestinationAccount: api.Account{
+                AccountHolder: payment.DestinationAccount.AccountHolder,
+                AccountNumber: payment.DestinationAccount.AccountNumber,
+            },
+            Status: api.OptPaymentStatus{
+                Value: api.PaymentStatusConfirmed,
+                Set:   true,
+            },
+            CustomerTransactionId: api.OptString{
+                Value: customerTransactionId.String(),
+                Set:   true,
+            },
+            CreatedAt: api.OptDate{
+                Value: time.Now(),
+                Set:   true,
+            },
+            UpdatedAt: api.OptDate{
+                Value: time.Now(),
+                Set:   true,
+            },
+        }, nil)
 
     dinopayServer, err := api.NewServer(handlerMock)
     require.NoError(t, err)
@@ -48,5 +88,7 @@ func TestClient(t *testing.T) {
     resPayment, ok := res.(*api.Payment)
     require.True(t, ok)
 
-    require.Equal(t, payment.ID, resPayment.ID)
+    require.Equal(t, responsePaymentID, resPayment.ID.Value)
+    require.Equal(t, payment.CustomerTransactionId.Value, resPayment.CustomerTransactionId.Value)
+    require.Equal(t, api.PaymentStatusConfirmed, resPayment.Status.Value)
 }
